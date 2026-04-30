@@ -2,17 +2,21 @@ from sentence_transformers import SentenceTransformer, InputExample, losses
 from torch.utils.data import DataLoader
 import pandas as pd
 
-df = pd.read_csv("data/sample_pairs.csv")
+DATASET_PATH = "data/hf_dataset.csv"
+
+df = pd.read_csv(DATASET_PATH)
 
 train_examples = []
 
 for _, row in df.iterrows():
     train_examples.append(
         InputExample(
-            texts=[row["resume"], row["job_description"]],
+            texts=[str(row["resume"]), str(row["job_description"])],
             label=float(row["label"])
         )
     )
+
+print("Training examples:", len(train_examples))
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
@@ -22,7 +26,7 @@ train_loss = losses.CosineSimilarityLoss(model)
 model.fit(
     train_objectives=[(train_dataloader, train_loss)],
     epochs=2,
-    warmup_steps=10
+    warmup_steps=100
 )
 
 model.save("fine_tuned_model")

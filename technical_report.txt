@@ -1,0 +1,92 @@
+AI Resume–Job Matching System
+Introduction
+
+The goal of this project is to develop an AI system that evaluates how well a resume matches a job description. This is a common real-world problem in recruitment, where companies need to efficiently filter candidates based on relevance.
+
+The approach taken in this project is to use a transformer-based model to measure semantic similarity between resumes and job descriptions. In addition, a skill detection module is used to identify missing skills. The system outputs a match score and provides feedback to the user.
+
+The full implementation can be found in the GitHub repository (link included here).
+
+Data
+
+Since large labeled datasets for resume–job matching are not publicly available, a custom dataset was created. The dataset consists of resume and job description pairs labeled as either:
+
+1 = good match
+0 = poor match
+
+The dataset includes approximately 30 examples, covering both matching and non-matching pairs across different domains such as software engineering, data science, design, and business roles.
+
+Basic preprocessing was applied:
+
+Lowercasing text
+Removing extra whitespace
+
+A challenge encountered was the limited size of the dataset, which restricts model generalization.
+
+Model & Methods
+
+The system uses a transformer-based model from the Sentence Transformers library:
+
+Model: all-MiniLM-L6-v2
+
+This model converts text into embeddings, which are vector representations capturing semantic meaning.
+
+Two main components are used:
+
+Semantic Similarity
+Cosine similarity between resume and job embeddings
+Produces a similarity score
+Skill Matching
+Extracts predefined skills from both texts
+Computes overlap and identifies missing skills
+
+The final score is calculated as:
+
+70% semantic similarity
+30% skill match score
+
+To improve performance, the model was fine-tuned on the custom dataset using cosine similarity loss. This allows the model to better distinguish between matching and non-matching pairs.
+
+Results & Evaluation
+
+The model was evaluated using accuracy and F1 score.
+
+Before fine-tuning:
+
+Accuracy: 0.83
+F1 Score: 0.80
+
+After fine-tuning:
+
+Accuracy: 0.90
+F1 Score: 0.89
+
+The results show that fine-tuning improved the model’s ability to correctly classify resume–job matches. However, due to the small dataset size, the results should be interpreted with caution.
+
+Contributions
+
+All components of the project were implemented independently, including:
+
+Data creation and labeling
+Model implementation
+Fine-tuning process
+Evaluation metrics
+Streamlit interface
+
+External resources used:
+
+Sentence Transformers documentation
+Online tutorials for transformer models
+GenAI (ChatGPT) was used for guidance in structuring the project and debugging code
+Challenges & Future Work
+
+The main challenge was the lack of a large, high-quality dataset. This required manually creating training examples, which limits scalability.
+
+Another challenge was balancing model performance with computational cost, leading to the choice of a lightweight transformer model.
+
+Future improvements include:
+
+Using a larger and more diverse dataset
+Improving skill extraction using NLP techniques instead of keyword matching
+Adding ranking evaluation (e.g., ranking multiple resumes for one job)
+Integrating a more advanced LLM for generating detailed feedback
