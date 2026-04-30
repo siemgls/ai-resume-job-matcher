@@ -1,49 +1,30 @@
-# AI Resume-to-Job Matching System
+# AI Resume-Job Matching System
 
-This project evaluates how well a resume matches a job description.
+This project is an AI-based system that evaluates how well a resume matches a job description.
+
+The system compares the semantic meaning of both texts using a transformer-based model and gives a match score. It also detects important skills from the job description and identifies which skills are missing from the resume.
 
 ## Features
 
-- Semantic similarity using a transformer model
+- Resume and job description input
+- Semantic similarity score using Sentence Transformers
 - Skill detection
-- Missing skills identification
+- Missing skill identification
 - Final match score
-- Readable feedback
-- Simple Streamlit interface
-- Basic evaluation script
+- Simple feedback for the user
+- Evaluation using accuracy and F1 score
 
-## Setup
+## Technologies Used
+
+- Python
+- Streamlit
+- Sentence Transformers
+- Scikit-learn
+- Pandas
+
+## How to Run
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Run the App
-
-```bash
-streamlit run app.py
-```
-
-## Run Evaluation
-
-```bash
-python evaluate.py
-```
-
-## Current Model
-
-The MVP uses:
-
-```text
-sentence-transformers/all-MiniLM-L6-v2
-```
-
-This is a lightweight transformer model suitable for semantic similarity tasks.
-
-## Next Improvements
-
-- Add a larger resume/job dataset
-- Fine-tune the sentence transformer
-- Add LLM API feedback
-- Improve skill extraction using NLP instead of keyword matching
-- Add PDF resume upload
