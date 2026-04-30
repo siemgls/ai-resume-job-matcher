@@ -1,8 +1,8 @@
 from sentence_transformers import SentenceTransformer, util
 from skills import skill_match_score
 
-# Lightweight transformer model suitable for laptops.
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+# Use fine-tuned model instead of base model
+MODEL_NAME = "fine_tuned_model"
 model = SentenceTransformer(MODEL_NAME)
 
 
@@ -30,7 +30,7 @@ def final_match_score(resume_text: str, job_text: str) -> dict:
     semantic_score = semantic_similarity(resume_text, job_text)
     skill_result = skill_match_score(resume_text, job_text)
 
-    # Weighted score: semantic meaning matters more than exact skill keywords.
+    # Weighted score: semantic meaning matters more than exact skill keywords
     final_score = (0.7 * semantic_score) + (0.3 * skill_result["skill_score"])
 
     return {
