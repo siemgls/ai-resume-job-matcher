@@ -3,3 +3,9 @@ scikit-learn
 pandas
 streamlit
 numpy
+pypdf
+python-docx
+openai
+python-dotenv
+torchvision
+keybert

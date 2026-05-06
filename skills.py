@@ -1,52 +1,68 @@
-SKILL_MAP = {
-    "python": ["python"],
-    "java": ["java"],
-    "javascript": ["javascript", "js"],
-    "sql": ["sql", "mysql", "postgresql"],
-    "machine learning": ["machine learning", "ml"],
-    "deep learning": ["deep learning", "neural networks"],
-    "nlp": ["nlp", "natural language processing"],
-    "pytorch": ["pytorch"],
-    "tensorflow": ["tensorflow"],
-    "scikit-learn": ["scikit-learn", "sklearn"],
-    "pandas": ["pandas"],
-    "numpy": ["numpy"],
-    "aws": ["aws", "amazon web services"],
-    "azure": ["azure"],
-    "docker": ["docker"],
-    "kubernetes": ["kubernetes", "k8s"],
-    "git": ["git", "github"],
-    "linux": ["linux"],
-    "react": ["react", "react.js", "reactjs"],
-    "html": ["html"],
-    "css": ["css"],
-    "api": ["api", "rest api", "rest"],
-    "power bi": ["power bi", "powerbi"],
-    "tableau": ["tableau"],
-    "excel": ["excel"],
-    "figma": ["figma"],
-    "photoshop": ["photoshop"],
-    "communication": ["communication"],
-    "leadership": ["leadership"],
-    "agile": ["agile", "scrum"],
-    "jira": ["jira"],
-    "cybersecurity": ["cybersecurity", "security"],
-    "siem": ["siem"],
-    "incident response": ["incident response"],
-}
+from keybert import KeyBERT
+from sentence_transformers import SentenceTransformer, util
+
+MODEL_NAME = "fine_tuned_model"
+
+embedding_model = SentenceTransformer(MODEL_NAME)
+kw_model = KeyBERT(model=embedding_model)
+
+KNOWN_SKILLS = [
+    "python", "java", "javascript", "typescript", "sql", "mysql", "postgresql",
+    "machine learning", "deep learning", "nlp", "pytorch", "tensorflow",
+    "scikit-learn", "pandas", "numpy", "aws", "azure", "docker", "kubernetes",
+    "git", "github", "linux", "react", "html", "css", "node.js", "spring boot",
+    "rest api", "microservices", "ci/cd", "power bi", "tableau", "excel",
+    "figma", "photoshop", "communication", "leadership", "agile", "scrum",
+    "jira", "cybersecurity", "siem", "incident response", "data analysis",
+    "data visualization", "cloud computing", "api development"
+]
+
+
+def extract_candidate_skills(text, top_n=25):
+    text = text.lower()
+
+    keywords = kw_model.extract_keywords(
+        text,
+        keyphrase_ngram_range=(1, 3),
+        stop_words="english",
+        top_n=top_n
+    )
+
+    return [kw[0] for kw in keywords]
+
+
+def map_to_known_skills(candidate_phrases, threshold=0.55):
+    found_skills = set()
+
+    if not candidate_phrases:
+        return found_skills
+
+    phrase_embeddings = embedding_model.encode(candidate_phrases, convert_to_tensor=True)
+    skill_embeddings = embedding_model.encode(KNOWN_SKILLS, convert_to_tensor=True)
+
+    similarity_matrix = util.cos_sim(phrase_embeddings, skill_embeddings)
+
+    for i, phrase in enumerate(candidate_phrases):
+        best_match_index = similarity_matrix[i].argmax().item()
+        best_score = similarity_matrix[i][best_match_index].item()
+
+        if best_score >= threshold:
+            found_skills.add(KNOWN_SKILLS[best_match_index])
+
+    return found_skills
 
 
 def find_skills(text):
-    text = text.lower()
-    found_skills = set()
+    candidate_phrases = extract_candidate_skills(text)
+    skills = map_to_known_skills(candidate_phrases)
 
-    for skill, synonyms in SKILL_MAP.items():
-        for synonym in synonyms:
-            if synonym in text:
-                found_skills.add(skill)
-                break
+    # fallback: also catch exact known skill names
+    text_lower = text.lower()
+    for skill in KNOWN_SKILLS:
+        if skill in text_lower:
+            skills.add(skill)
 
-    return found_skills
+    return skills
 
 
 def skill_match_score(resume_text, job_text):

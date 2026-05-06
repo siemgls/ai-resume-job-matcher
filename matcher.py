@@ -1,20 +1,18 @@
 from sentence_transformers import SentenceTransformer, util
 from skills import skill_match_score
+from experience import experience_match_score
 
-# Use fine-tuned model instead of base model
 MODEL_NAME = "fine_tuned_model"
 model = SentenceTransformer(MODEL_NAME)
 
 
 def clean_text(text: str) -> str:
-    """Basic text cleaning."""
     text = text.lower()
     text = text.replace("\n", " ")
     return " ".join(text.split())
 
 
 def semantic_similarity(resume_text: str, job_text: str) -> float:
-    """Calculate semantic similarity between resume and job description."""
     resume_text = clean_text(resume_text)
     job_text = clean_text(job_text)
 
@@ -26,16 +24,22 @@ def semantic_similarity(resume_text: str, job_text: str) -> float:
 
 
 def final_match_score(resume_text: str, job_text: str) -> dict:
-    """Combine semantic similarity and skill matching into a final score."""
     semantic_score = semantic_similarity(resume_text, job_text)
     skill_result = skill_match_score(resume_text, job_text)
+    experience_result = experience_match_score(resume_text, job_text)
 
-    # Weighted score: semantic meaning matters more than exact skill keywords
-    final_score = (0.7 * semantic_score) + (0.3 * skill_result["skill_score"])
+    final_score = (
+        0.60 * semantic_score +
+        0.25 * skill_result["skill_score"] +
+        0.15 * experience_result["experience_score"]
+    )
 
     return {
         "semantic_score": semantic_score,
         "skill_score": skill_result["skill_score"],
+        "experience_score": experience_result["experience_score"],
+        "resume_years": experience_result["resume_years"],
+        "job_years": experience_result["job_years"],
         "final_score": round(final_score, 2),
         "resume_skills": skill_result["resume_skills"],
         "job_skills": skill_result["job_skills"],

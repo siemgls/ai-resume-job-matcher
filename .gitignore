@@ -2,3 +2,5 @@ data/*.csv
 fine_tuned_model/
 __pycache__/
 *.pycgit add .c
+.env
+*.pyc

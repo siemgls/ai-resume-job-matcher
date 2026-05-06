@@ -1,28 +1,41 @@
 def generate_feedback(final_score, semantic_score, skill_score, missing_skills):
     feedback = []
 
-    feedback.append(f"The resume received a final match score of {final_score}%.")
+    # =====================
+    # Overall summary
+    # =====================
+    feedback.append(f"Final match score: {final_score}%.")
 
     if final_score >= 80:
-        feedback.append("This appears to be a strong match for the job description.")
+        feedback.append("Strong match for this role.")
     elif final_score >= 60:
-        feedback.append("This appears to be a moderate match, but there is room for improvement.")
+        feedback.append("Moderate match. Some improvements will increase your chances.")
     else:
-        feedback.append("This appears to be a weak match for the job description.")
+        feedback.append("Weak match. Resume needs significant improvement.")
 
-    feedback.append(
-        f"The semantic similarity score is {semantic_score}%, which shows how closely the resume and job description match in meaning."
-    )
+    # =====================
+    # Detailed explanation
+    # =====================
+    feedback.append(f"Semantic similarity: {semantic_score}% (how well your experience matches the job).")
+    feedback.append(f"Skill match: {skill_score}% (overlap with required skills).")
 
-    feedback.append(
-        f"The skill match score is {skill_score}%, based on the overlap between required job skills and resume skills."
-    )
-
+    # =====================
+    # Missing skills
+    # =====================
     if missing_skills:
-        feedback.append(
-            "The main missing skills are: " + ", ".join(missing_skills) + "."
-        )
-    else:
-        feedback.append("No major required skills were missing from the resume.")
+        feedback.append("Missing key skills: " + ", ".join(missing_skills))
 
-    return " ".join(feedback)
+        feedback.append("\nHow to improve your resume:")
+
+        for skill in missing_skills[:5]:
+            feedback.append(
+                f"- Add {skill} with a real example (project, internship, or work experience)."
+            )
+
+        feedback.append("- Include measurable results (e.g., improved performance by X%).")
+        feedback.append("- Use strong action verbs (Built, Developed, Optimized).")
+        feedback.append("- Tailor your resume to match job keywords.")
+    else:
+        feedback.append("Great job — no major skills are missing.")
+
+    return "\n".join(feedback)
