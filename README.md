@@ -1,30 +1,90 @@
-# AI Resume-Job Matching System
+# AI Resume–Job Matching System
 
-This project is an AI-based system that evaluates how well a resume matches a job description.
+An AI-powered resume analysis platform that compares resumes against job descriptions using semantic AI matching, skill extraction, experience analysis, and personalized improvement feedback.
 
-The system compares the semantic meaning of both texts using a transformer-based model and gives a match score. It also detects important skills from the job description and identifies which skills are missing from the resume.
+The system uses transformer-based embeddings to understand the semantic similarity between resumes and jobs rather than relying only on keyword matching.
 
-## Features
+---
 
-- Resume and job description input
-- Semantic similarity score using Sentence Transformers
-- Skill detection
+# Features
+
+## Core Matching
+- Resume upload (`PDF`, `DOCX`, `TXT`)
+- Semantic similarity scoring using Sentence Transformers
+- AI-powered job matching
+- Fast semantic search with precomputed embeddings
+- Final weighted match score
+
+## Skill Analysis
+- Automatic skill extraction
+- Matched skill detection
 - Missing skill identification
-- Final match score
-- Simple feedback for the user
-- Evaluation using accuracy and F1 score
+- Skill overlap scoring
+- Skill gap analysis
 
-## Technologies Used
+## Experience Analysis
+- Experience/year extraction
+- Resume years vs required years comparison
+- Experience match scoring
+
+## AI Feedback
+- GPT-powered resume feedback
+- Resume strengths and weaknesses
+- Personalized improvement suggestions
+- Resume enhancement recommendations
+
+## Resume Improvement Tools
+- Resume Improvement Generator
+- Skill Gap Roadmap Generator
+- Learning path suggestions
+- Recommendations for improving job compatibility
+
+## Visualization
+- Interactive Streamlit dashboard
+- Score breakdown charts
+- Progress bars and metrics
+- Top job match tables
+
+## Performance Improvements
+- Fast semantic job retrieval
+- Precomputed embedding support
+- Hybrid scoring system
+- Multi-stage ranking pipeline
+
+---
+
+# Technologies Used
 
 - Python
 - Streamlit
 - Sentence Transformers
+- OpenAI API
 - Scikit-learn
 - Pandas
+- Altair
+- NumPy
 
-## How to Run
+---
 
-Install dependencies:
+# Project Structure
 
 ```bash
-pip install -r requirements.txt
+project/
+│
+├── app.py
+├── matcher.py
+├── fast_matcher.py
+├── feedback.py
+├── gpt_feedback.py
+├── resume_improver.py
+├── skill_roadmap.py
+├── file_utils.py
+├── evaluate.py
+│
+├── data/
+│   ├── job_descriptions.csv
+│   ├── job_descriptions_clean.csv
+│   └── job_embeddings.pkl
+│
+├── requirements.txt
+└── README.md
