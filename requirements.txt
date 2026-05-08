@@ -7,5 +7,7 @@ pypdf
 python-docx
 openai
 python-dotenv
+torch
 torchvision
+altair
 keybert
