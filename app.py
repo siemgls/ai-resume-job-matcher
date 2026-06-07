@@ -31,6 +31,7 @@ for key, default in {
     "resume_improvements": "",
     "skill_roadmap": "",
     "updated_resume_bytes": None,
+    "selected_job_index": 0,
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -104,6 +105,8 @@ if st.session_state.page == "results":
         st.session_state.page = "home"
         st.session_state.resume_improvements = ""
         st.session_state.skill_roadmap = ""
+        st.session_state.updated_resume_bytes = None
+        st.session_state.selected_job_index = 0
         st.rerun()
 
     st.title("Match Results")
@@ -112,39 +115,64 @@ if st.session_state.page == "results":
     display_cols = ["job_title", "score", "semantic_score", "skill_score", "experience_score", "matched", "missing"]
     st.dataframe(results_df[display_cols].head(10), use_container_width=True)
 
-    st.subheader("Best Job")
+    # ── Job selector ──────────────────────────────────────────────────────────
+    top10 = results_df.head(10).reset_index(drop=True)
+    job_options = [
+        f"#{i+1} — {row['job_title']} ({row['score']}%)"
+        for i, row in top10.iterrows()
+    ]
+
+    selected_label = st.selectbox(
+        "Select a job to analyse:",
+        options=job_options,
+        index=st.session_state.selected_job_index
+    )
+    new_index = job_options.index(selected_label)
+
+    if new_index != st.session_state.selected_job_index:
+        st.session_state.selected_job_index = new_index
+        st.session_state.resume_improvements = ""
+        st.session_state.skill_roadmap = ""
+        st.session_state.updated_resume_bytes = None
+        st.rerun()
+
+    selected = top10.iloc[st.session_state.selected_job_index].to_dict()
+
+    # ── Selected job details ──────────────────────────────────────────────────
+    st.subheader(f"Analysis — {selected['job_title']}")
     col1, col2 = st.columns(2)
-    col1.metric("Role", best["job_title"])
-    col2.metric("Final Score", f"{best['score']}%")
+    col1.metric("Role", selected["job_title"])
+    col2.metric("Final Score", f"{selected['score']}%")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Semantic", f"{best['semantic_score']}%")
-    c2.metric("Skills", f"{best['skill_score']}%")
-    c3.metric("Experience", f"{best['experience_score']}%")
+    c1.metric("Semantic", f"{selected['semantic_score']}%")
+    c2.metric("Skills", f"{selected['skill_score']}%")
+    c3.metric("Experience", f"{selected['experience_score']}%")
 
     show_score_chart(
-        [best["semantic_score"], best["skill_score"], best["experience_score"]],
-        "Best Job Score Breakdown"
+        [selected["semantic_score"], selected["skill_score"], selected["experience_score"]],
+        "Score Breakdown"
     )
 
-    st.write("**Matched Skills:**", best["matched"] or "None")
-    st.write("**Missing Skills:**", best["missing"] or "None")
+    st.write("**Matched Skills:**", selected["matched"] or "None")
+    st.write("**Missing Skills:**", selected["missing"] or "None")
 
     st.subheader("AI Feedback")
     with st.spinner("Generating AI feedback..."):
-        gpt_feedback = generate_gpt_feedback(resume_text, best["job_description"])
+        gpt_feedback = generate_gpt_feedback(resume_text, selected["job_description"])
     if gpt_feedback:
         st.write(gpt_feedback)
     else:
         st.info("GPT unavailable — using built-in feedback.")
         st.write(generate_feedback(
-            best["score"], best["semantic_score"], best["skill_score"], best["missing_list"]
+            selected["score"], selected["semantic_score"],
+            selected["skill_score"], selected["missing_list"]
         ))
 
     st.subheader("Resume Improvement")
     if st.button("Generate Resume Improvements"):
         st.session_state.resume_improvements = generate_resume_improvements(
-            resume_text, best["job_description"], best["job_title"], best["missing_list"]
+            resume_text, selected["job_description"], selected["job_title"], selected["missing_list"]
         )
     if st.session_state.resume_improvements:
         st.write(st.session_state.resume_improvements)
@@ -167,7 +195,7 @@ if st.session_state.page == "results":
 
     st.subheader("Skill Gap Roadmap")
     if st.button("Generate Skill Roadmap"):
-        st.session_state.skill_roadmap = generate_skill_roadmap(best["missing_list"])
+        st.session_state.skill_roadmap = generate_skill_roadmap(selected["missing_list"])
     if st.session_state.skill_roadmap:
         st.markdown(st.session_state.skill_roadmap)
 
@@ -178,10 +206,10 @@ if st.session_state.page == "results":
     if recipient:
         mailto = build_mailto_url(
             to=recipient,
-            job_title=best["job_title"],
-            score=best["score"],
-            matched=best["matched"],
-            missing=best["missing"],
+            job_title=selected["job_title"],
+            score=selected["score"],
+            matched=selected["matched"],
+            missing=selected["missing"],
             improvements=st.session_state.resume_improvements,
         )
         st.link_button("Open in mail client", mailto)
