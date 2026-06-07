@@ -2,7 +2,7 @@ import pandas as pd
 from matcher import final_match_score
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 
-DATASET_PATH = "data/hf_dataset.csv"
+DATASET_PATH = "data/hf_test.csv"
 
 
 def get_scores(df):

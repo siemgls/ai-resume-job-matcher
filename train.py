@@ -1,22 +1,34 @@
 from sentence_transformers import SentenceTransformer, InputExample, losses
 from torch.utils.data import DataLoader
+from sklearn.model_selection import train_test_split
 import pandas as pd
 
 DATASET_PATH = "data/hf_dataset.csv"
 
 df = pd.read_csv(DATASET_PATH)
 
-train_examples = []
+train_df, test_df = train_test_split(
+    df,
+    test_size=0.2,
+    random_state=42,
+    stratify=df["label"]
+)
 
-for _, row in df.iterrows():
+test_df.to_csv("data/hf_test.csv", index=False)
+
+print(f"Train size: {len(train_df)}")
+print(f"Test size:  {len(test_df)}")
+print(f"Train label distribution:\n{train_df['label'].value_counts()}")
+print(f"Test label distribution:\n{test_df['label'].value_counts()}")
+
+train_examples = []
+for _, row in train_df.iterrows():
     train_examples.append(
         InputExample(
             texts=[str(row["resume"]), str(row["job_description"])],
             label=float(row["label"])
         )
     )
-
-print("Training examples:", len(train_examples))
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
