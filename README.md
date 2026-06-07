@@ -1,243 +1,196 @@
-# AI Resume-Job Matching System
+# AI Resume–Job Matching System
 
-## Overview
+An intelligent career tool that scores how well a resume matches a job description using fine-tuned transformer embeddings, skill extraction, experience matching, and GPT-powered feedback.
 
-The AI Resume–Job Matching System is an intelligent recruitment assistant that analyzes how well a resume matches a job description using Natural Language Processing (NLP), transformer embeddings, semantic similarity, and AI-generated feedback.
-
-The application helps users:
-- Compare resumes with job descriptions
-- Detect matched and missing skills
-- Evaluate experience relevance
-- Generate resume improvement suggestions
-- Create personalized skill gap roadmaps
-- Find the best matching jobs automatically
-
-The project uses transformer-based embeddings with semantic search to simulate modern AI recruitment systems.
+Built with Streamlit. Developed as an Advanced AI individual project (BCS).
 
 ---
 
-# Features
+## Features
 
-## Resume Analysis
-- Upload resumes in:
-  - PDF
-  - DOCX
-  - TXT
+### Two matching modes
+- **Single job mode** — paste any job description and get an instant match analysis
+- **Auto mode (default)** — scan all 500 jobs and get a ranked list of the best matches
 
-## Semantic Matching
-- Uses Sentence Transformers to compare semantic meaning between resumes and jobs
-- Detects relevance even when wording differs
+### Match scoring
+The final score is a weighted combination of three signals:
 
-## AI Skill Extraction
-- Automatically extracts technical and professional skills
-- Detects:
-  - Matched skills
-  - Missing skills
+| Component | Weight |
+|---|---|
+| Semantic similarity | 60% |
+| Skill match | 25% |
+| Experience match | 15% |
 
-## Experience Detection
-- Extracts years of experience from:
-  - Resume
-  - Job description
-- Calculates an experience match score
+### AI feedback & improvement
+- **AI Feedback** — GPT-4o-mini returns strengths and weaknesses specific to the selected job
+- **Resume Improvements** — separate GPT prompt rewrites the summary, adds bullet points, and suggests project ideas for missing skills
+- **Apply & Download** — GPT rewrites the full resume and exports it as a styled PDF (name, section headers, bullets formatted with ReportLab)
+- **Skill Gap Roadmap** — GPT generates a 2-week learning plan per missing skill with resume bullets to add
 
-## Final AI Match Score
-The final score combines:
-- Semantic similarity
-- Skill overlap
-- Experience relevance
-
-## GPT Feedback
-Uses OpenAI GPT models to generate:
-- Strengths
-- Weaknesses
-- Resume advice
-- Improvement suggestions
-
-## Resume Improvement Generator
-Generates:
-- Better bullet points
-- Stronger achievement descriptions
-- Resume optimization suggestions
-
-## Skill Gap Roadmap
-Creates a personalized learning roadmap for missing skills:
-- What to learn
-- Learning priorities
-- Suggested improvement direction
-
-## Fast Semantic Job Search
-Precomputed embeddings allow fast matching against large job datasets.
-
-## Interactive Dashboard
-Built using Streamlit:
-- Score charts
-- Progress bars
-- Interactive tables
-- AI feedback sections
+### UX
+- PDF preview of uploaded resume rendered directly in the browser
+- Results displayed on a dedicated results page with a back button
+- Job selector dropdown to switch between top-10 matches without re-running the scan
+- Email button that opens your mail client with a pre-composed results email to the candidate
+- Uploading a new resume automatically clears all previous results
 
 ---
 
-# Technologies Used
+## How It Works
 
-- Python
-- Streamlit
-- Sentence Transformers
-- OpenAI API
-- Pandas
-- Scikit-learn
-- Altair
+### 1. Fine-tuned sentence embeddings
+- Base model: `sentence-transformers/all-MiniLM-L6-v2`
+- Fine-tuned on 816 labelled resume–job pairs using `CosineSimilarityLoss`
+- Pushes matching pairs close together and non-matching pairs apart in vector space
+- Saved to `fine_tuned_model/`
+
+### 2. Skill extraction (KeyBERT)
+- KeyBERT extracts candidate skill phrases from both resume and job description
+- Phrases are mapped to a curated `KNOWN_SKILLS` list via embedding similarity (threshold 0.55)
+- Skill score = `0.70 × job_coverage + 0.30 × resume_relevance`
+
+### 3. Experience matching
+- Regex extracts years of experience from both texts
+- Score is 100% if the candidate meets or exceeds the required years
+
+### 4. Two-stage retrieval (fast mode)
+- All 500 job embeddings are pre-computed once and saved to `data/job_embeddings.npy`
+- On resume upload: one matrix multiply compares the resume against all 500 jobs instantly
+- Full weighted scoring only runs on the top-K candidates
 
 ---
 
-# AI & NLP Techniques Used
+## Datasets
 
-## Semantic Similarity
-Model:
-```text
-all-MiniLM-L6-v2
+| Dataset | Source | Use |
+|---|---|---|
+| `hf_dataset.csv` | HuggingFace — `netsol/resume-score-details` | 1,021 labelled resume–job pairs for fine-tuning |
+| `job_descriptions_clean.csv` | Kaggle job descriptions | 500 real job postings for matching |
 
-Used for:
+The HuggingFace dataset was split 80/20 (stratified): **816 training / 205 test**.
 
-Resume embeddings
-Job description embeddings
-Cosine similarity scoring
-Skill Matching
+---
 
-Custom NLP-based skill extraction system:
+## Evaluation Results
 
-Skill detection
-Skill overlap scoring
-Missing skill analysis
-Experience Matching
+Evaluated on the **held-out 205-example test set** (never seen during training):
 
-Regex and NLP-based extraction of:
+| Metric | Result |
+|---|---|
+| Accuracy | **89.8%** |
+| F1 Score | **92.4%** |
+| Precision (match) | 86% |
+| Recall (match) | **99%** |
+| Top-1 Ranking Accuracy | **100%** |
+| Top-3 Ranking Accuracy | **100%** |
 
-Years of experience
-Required experience
-Experience scoring
-GPT-Based Feedback
+In all 3 ranking tests the correct resume was ranked #1, scoring 80–93% vs distractors below 44%.
 
-OpenAI GPT models generate:
+---
 
-Resume feedback
-Career coaching suggestions
-Resume improvements
-Learning roadmaps
-Scoring System
+## Project Structure
 
-The final score combines:
-
-Component	Weight
-Semantic Similarity	50%
-Skill Match	35%
-Experience Match	15%
-Project Structure
-project/
+```
+ai-resume-job-matcher/
 │
-├── app.py
-├── matcher.py
-├── fast_matcher.py
-├── feedback.py
-├── gpt_feedback.py
-├── resume_improver.py
-├── skill_roadmap.py
-├── file_utils.py
-├── evaluate.py
-├── generate_embeddings.py
+├── app.py                    # Streamlit app (home + results pages)
+├── matcher.py                # Final weighted match score
+├── fast_matcher.py           # Pre-computed embedding scan
+├── skills.py                 # KeyBERT skill extraction & scoring
+├── experience.py             # Regex experience extraction & scoring
+├── feedback.py               # Rule-based fallback feedback
+├── gpt_feedback.py           # GPT-4o-mini strengths/weaknesses
+├── resume_improver.py        # GPT improvements + styled PDF builder
+├── skill_roadmap.py          # GPT skill gap roadmap
+├── file_utils.py             # PDF/DOCX/TXT text extraction
+│
+├── train.py                  # Fine-tune model (80/20 split)
+├── evaluate.py               # Accuracy, F1, ranking evaluation
+├── precompute_jobs.py        # Pre-compute job embeddings
+├── load_hf_dataset.py        # Build hf_dataset.csv from HuggingFace
+├── prepare_jobs_dataset.py   # Clean Kaggle job descriptions
 │
 ├── data/
-│   ├── job_descriptions.csv
-│   ├── job_descriptions_clean.csv
-│   └── job_embeddings.pkl
+│   ├── hf_dataset.csv                  # Full labelled dataset
+│   ├── hf_test.csv                     # Held-out test set (205 rows)
+│   ├── job_descriptions_clean.csv      # 500 cleaned job postings
+│   ├── job_descriptions_with_index.csv # Jobs with stable index for embeddings
+│   ├── job_embeddings.npy              # Pre-computed job vectors (gitignored)
+│   ├── evaluation_results.csv          # Binary classification results
+│   └── ranking_results.csv             # Ranking evaluation results
 │
+├── fine_tuned_model/         # Saved fine-tuned sentence transformer
 ├── requirements.txt
 └── README.md
-Running the Application
-1. Install dependencies
+```
+
+---
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
 pip install -r requirements.txt
-2. Add your OpenAI API key
+```
 
-Create a .env file in the project root:
+### 2. Add your OpenAI API key
 
+Create a `.env` file in the project root:
+
+```
 OPENAI_API_KEY=your_api_key_here
+```
 
-This is required for:
+Required for: AI feedback, resume improvements, skill roadmap, and resume rewriting.
+All GPT features fall back to rule-based output if the key is missing or invalid.
 
-GPT feedback
-Resume improvement suggestions
-Skill roadmap generation
-3. Start the Streamlit app
+### 3. Run the app
+
+```bash
 streamlit run app.py
+```
 
-The application will open automatically in your browser.
+### 4. Enable fast matching (recommended, one-time)
 
-4. Optional: Enable Fast Semantic Search
+```bash
+python precompute_jobs.py
+```
 
-Generate precomputed job embeddings:
+Pre-computes embeddings for all 500 jobs and saves them to `data/job_embeddings.npy`.
+Without this the app falls back to slower per-job scoring.
 
-python generate_embeddings.py
+### 5. (Optional) Retrain the model
 
-This creates:
+```bash
+python train.py
+```
 
-data/job_embeddings.pkl
+Reads `data/hf_dataset.csv`, performs an 80/20 stratified split, fine-tunes `all-MiniLM-L6-v2`, and saves the model to `fine_tuned_model/`. Also writes `data/hf_test.csv` for evaluation.
 
-which enables much faster job matching.
+### 6. (Optional) Run evaluation
 
-5. Optional: Run Evaluation
+```bash
 python evaluate.py
+```
 
-Evaluation includes:
+Runs binary classification and ranking evaluation on `data/hf_test.csv` and saves results to `data/evaluation_results.csv` and `data/ranking_results.csv`.
 
-Accuracy
-Precision
-Recall
-F1 score
-Example Workflow
-Single Job Mode
-Upload resume
-Paste job description
-Analyze match
-Receive:
-Match score
-Missing skills
-AI feedback
-Resume improvements
-Skill roadmap
-Automatic Job Matching Mode
-Upload resume
-Search entire job dataset
-Find top matching jobs
-Receive:
-Ranked job recommendations
-Match scores
-AI optimization suggestions
-Evaluation
+---
 
-The system was evaluated using manually labeled resume-job pairs.
+## Known Limitations
 
-Metrics used:
+- Job dataset only covers developer roles (Python, Java, DevOps, etc.) — no cybersecurity, design, or business jobs
+- Skill extraction is limited to the `KNOWN_SKILLS` list; unlisted skills are missed
+- Experience matching uses a simple year-count regex, not seniority-level NER
+- GPT features require a paid OpenAI API key
 
-Accuracy
-Precision
-Recall
-F1 Score
+---
 
-Fine-tuning and improved scoring significantly increased matching quality.
+## Future Improvements
 
-Future Improvements
-
-Potential future upgrades:
-
-Advanced NLP skill extraction
-Resume section analysis
-ATS compatibility scoring
-Multi-resume ranking
-Cover letter generation
-Interview preparation assistant
-Real-time job API integration
-PDF export for reports
-Vector database integration
-RAG-based AI recruiter assistant
-Author
-
-Developed as an AI/NLP project focused on intelligent recruitment systems, semantic search, and resume optimization.
+- Add cybersecurity, design, and business job categories to the dataset
+- Replace keyword skill extraction with a fine-tuned NER model
+- ATS compatibility scoring and cover letter generation
+- Real-time job scraping instead of a static dataset
+- Cloud deployment with authentication

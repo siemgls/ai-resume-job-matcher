@@ -8,6 +8,8 @@ python-docx
 openai
 python-dotenv
 torch
-torchvision
 altair
 keybert
+reportlab
+huggingface_hub
+python-pptx
