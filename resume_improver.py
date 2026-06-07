@@ -99,8 +99,17 @@ Improvement suggestions to apply:
 Rewrite the full resume incorporating these suggestions.
 Keep the same person's real background — do not invent experience they don't have.
 Only improve how it is presented: enhance bullet points, update the summary, and add suggested skills where plausible.
-Return the complete rewritten resume as plain text with clear section headers (e.g. Profile, Experience, Skills, Education).
-Do not add any commentary — return only the resume text."""
+
+Return ONLY the resume text using this exact format — no extra commentary:
+
+Line 1: Full name only
+Line 2: City, Country | email@example.com | phone number
+Line 3: blank
+
+Then use ALL CAPS for every section header (e.g. PROFILE, EXPERIENCE, SKILLS, EDUCATION, CERTIFICATIONS, PROJECTS).
+Under each job write the job title and company on one line, then the date range on the next line.
+Use • for every bullet point.
+Leave a blank line between each job or section block."""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -119,27 +128,90 @@ def build_resume_pdf(resume_text):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
                             rightMargin=2*cm, leftMargin=2*cm,
                             topMargin=2*cm, bottomMargin=2*cm)
 
-    heading = ParagraphStyle("heading", fontSize=12, fontName="Helvetica-Bold",
-                             spaceBefore=10, spaceAfter=4)
-    body = ParagraphStyle("body", fontSize=9, fontName="Helvetica",
-                          spaceAfter=3, leading=13)
+    DARK    = colors.HexColor("#2c3e50")
+    GREY    = colors.HexColor("#666666")
+    ACCENT  = colors.HexColor("#2980b9")
 
+    name_style = ParagraphStyle("name", fontSize=22, fontName="Helvetica-Bold",
+                                alignment=TA_CENTER, spaceAfter=4, textColor=DARK)
+    contact_style = ParagraphStyle("contact", fontSize=9, fontName="Helvetica",
+                                   alignment=TA_CENTER, spaceAfter=12, textColor=GREY)
+    section_style = ParagraphStyle("section", fontSize=11, fontName="Helvetica-Bold",
+                                   spaceBefore=14, spaceAfter=4, textColor=ACCENT)
+    job_title_style = ParagraphStyle("job_title", fontSize=10, fontName="Helvetica-Bold",
+                                     spaceAfter=1, textColor=DARK)
+    date_style = ParagraphStyle("date", fontSize=9, fontName="Helvetica-Oblique",
+                                spaceAfter=3, textColor=GREY)
+    body_style = ParagraphStyle("body", fontSize=9, fontName="Helvetica",
+                                spaceAfter=3, leading=13, textColor=DARK)
+    bullet_style = ParagraphStyle("bullet", fontSize=9, fontName="Helvetica",
+                                  spaceAfter=3, leading=13, leftIndent=12, textColor=DARK)
+
+    lines = resume_text.split("\n")
     story = []
-    for line in resume_text.split("\n"):
-        stripped = line.strip()
+    i = 0
+
+    # First line = name, second line = contact
+    if lines:
+        name_line = lines[0].strip()
+        if name_line:
+            story.append(Paragraph(name_line, name_style))
+        i = 1
+
+    if i < len(lines):
+        contact_line = lines[i].strip()
+        if contact_line and not contact_line.isupper():
+            story.append(Paragraph(contact_line.replace("|", " • ").replace("&", "&amp;"), contact_style))
+            i += 1
+
+    story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT, spaceAfter=6))
+
+    section_keywords = {
+        "PROFILE", "SUMMARY", "EXPERIENCE", "WORK EXPERIENCE", "SKILLS",
+        "EDUCATION", "CERTIFICATIONS", "PROJECTS", "LANGUAGES", "AWARDS"
+    }
+
+    while i < len(lines):
+        raw = lines[i]
+        stripped = raw.strip()
+        clean = stripped.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        i += 1
+
         if not stripped:
             story.append(Spacer(1, 4))
-        elif stripped.isupper() or stripped.endswith(":"):
-            story.append(Paragraph(stripped, heading))
+            continue
+
+        upper = stripped.upper().rstrip(":").strip()
+        if upper in section_keywords or (stripped.isupper() and len(stripped) > 2):
+            story.append(Paragraph(stripped.rstrip(":"), section_style))
+            story.append(HRFlowable(width="100%", thickness=0.5, color=ACCENT, spaceAfter=5))
+            continue
+
+        if stripped.startswith("•") or stripped.startswith("-"):
+            bullet_text = clean.lstrip("•- ").strip()
+            story.append(Paragraph(f"• {bullet_text}", bullet_style))
+            continue
+
+        # Detect date lines (contain year patterns)
+        import re
+        if re.search(r'\b(19|20)\d{2}\b', stripped) and len(stripped) < 60:
+            story.append(Paragraph(clean, date_style))
+            continue
+
+        # Lines with a dash separator are likely job title — company lines
+        if " — " in stripped or " - " in stripped:
+            story.append(Paragraph(clean, job_title_style))
         else:
-            story.append(Paragraph(stripped.replace("&", "&amp;"), body))
+            story.append(Paragraph(clean, body_style))
 
     doc.build(story)
     return buffer.getvalue()
