@@ -21,26 +21,20 @@ You are an expert career coach.
 Analyze the resume against the job description.
 
 Resume:
-{resume_text[:2000]}
+{resume_text[:4000]}
 
 Job Description:
 {job_description[:2000]}
 
-Return structured feedback:
+Return structured feedback with exactly two sections:
 
 1. Strengths
-- What matches well
+- What matches well between the resume and the job
 
 2. Weaknesses
-- What is missing or weak
+- What is missing or weak compared to the job requirements
 
-3. Improvements (MOST IMPORTANT)
-- Exact skills to add
-- Example projects to include
-- Specific resume bullet improvements
-
-Be specific and practical.
-Avoid generic advice like "improve your resume".
+Be specific and practical. Do not include improvement suggestions or action items.
 """
 
         response = client.chat.completions.create(
@@ -51,6 +45,6 @@ Avoid generic advice like "improve your resume".
 
         return response.choices[0].message.content
 
-    except Exception as e:
+    except Exception:
         # Better UX than silent failure
         return None

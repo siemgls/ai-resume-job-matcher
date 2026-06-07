@@ -1,6 +1,6 @@
 data/*.csv
+data/job_embeddings.npy
 fine_tuned_model/
 __pycache__/
-*.pycgit add .c
-.env
 *.pyc
+.env

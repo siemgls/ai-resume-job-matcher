@@ -11,10 +11,10 @@ KNOWN_SKILLS = [
     "machine learning", "deep learning", "nlp", "pytorch", "tensorflow",
     "scikit-learn", "pandas", "numpy", "aws", "azure", "docker", "kubernetes",
     "git", "github", "linux", "react", "html", "css", "node.js", "spring boot",
-    "rest api", "microservices", "ci/cd", "power bi", "tableau", "excel",
-    "figma", "photoshop", "communication", "leadership", "agile", "scrum",
-    "jira", "cybersecurity", "siem", "incident response", "data analysis",
-    "data visualization", "cloud computing", "api development"
+    "rest api", "microservices", "ci/cd", "power bi", "tableau",
+    "figma", "photoshop", "agile", "scrum", "jira", "cybersecurity", "siem",
+    "incident response", "data analysis", "data visualization", "cloud computing",
+    "api development"
 ]
 
 
@@ -42,7 +42,7 @@ def map_to_known_skills(candidate_phrases, threshold=0.55):
 
     similarity_matrix = util.cos_sim(phrase_embeddings, skill_embeddings)
 
-    for i, phrase in enumerate(candidate_phrases):
+    for i, _ in enumerate(candidate_phrases):
         best_match_index = similarity_matrix[i].argmax().item()
         best_score = similarity_matrix[i][best_match_index].item()
 
@@ -81,7 +81,9 @@ def skill_match_score(resume_text, job_text):
     matched_skills = resume_skills.intersection(job_skills)
     missing_skills = job_skills - resume_skills
 
-    score = len(matched_skills) / len(job_skills) * 100
+    job_coverage = len(matched_skills) / len(job_skills)
+    resume_relevance = len(matched_skills) / len(resume_skills) if resume_skills else 0
+    score = (0.7 * job_coverage + 0.3 * resume_relevance) * 100
 
     return {
         "skill_score": round(score, 2),
